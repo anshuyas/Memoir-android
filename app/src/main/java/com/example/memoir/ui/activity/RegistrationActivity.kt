@@ -2,89 +2,184 @@ package com.example.memoir.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.util.Patterns
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.memoir.R
+import com.example.memoir.databinding.ActivityRegistrationBinding
+import com.example.memoir.model.UserModel
 import com.example.memoir.repository.UserRepositoryImpl
+import com.example.memoir.utils.LoadingUtils
 import com.example.memoir.viewmodel.UserViewModel
-import com.example.memoir.viewmodel.UserViewModelFactory
 
 class RegistrationActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityRegistrationBinding
     private lateinit var userViewModel: UserViewModel
+    private lateinit var loadingUtils: LoadingUtils
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_registration)
 
-        val emailInput = findViewById<EditText>(R.id.email)
-        val passwordInput = findViewById<EditText>(R.id.password)
-        val registerButton = findViewById<Button>(R.id.registerButton)
+        binding = ActivityRegistrationBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Initialize ViewModel with Factory
+        loadingUtils = LoadingUtils(this)
         val repo = UserRepositoryImpl()
-        val factory = UserViewModelFactory(repo)
-        userViewModel = ViewModelProvider(this, factory)[UserViewModel::class.java]
+        userViewModel = UserViewModel(repo)
 
-        // Observe registration success/failure
-        userViewModel.isRegistrationSuccessful.observe(this) { success ->
-            if (success) {
-                Log.d(TAG, "Registration successful, navigating to LoginActivity")
-                showToast("Registration Successful!")
-                startActivity(Intent(this, LoginActivity::class.java))
-                finish() // Close the current activity
+        // Password visibility toggle
+        binding.togglePassword.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                binding.registerPassword.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            } else {
+                binding.registerPassword.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            binding.registerPassword.setSelection(binding.registerPassword.text.length)
+        }
+
+        binding.toggleConfirmPassword.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                binding.registerConfirmPassword.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            } else {
+                binding.registerConfirmPassword.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            binding.registerConfirmPassword.setSelection(binding.registerConfirmPassword.text.length)
+        }
+
+        // Sign-up button click listener
+        binding.signUp.setOnClickListener {
+            val firstName = binding.registerFname.text.toString().trim()
+            val lastName = binding.registerLName.text.toString().trim()
+            val email = binding.registerEmail.text.toString().trim()
+            val password = binding.registerPassword.text.toString().trim()
+            val confirmPassword = binding.registerConfirmPassword.text.toString().trim()
+            val phone = binding.registerContact.text.toString().trim()
+            val address = binding.registerAddress.text.toString().trim()
+
+            if (validateInputs(firstName, lastName, email, password, confirmPassword, phone, address)) {
+                loadingUtils.show()
+                userViewModel.signup(email, password) { success, message, userId ->
+                    if (success) {
+                        val userModel = UserModel(userId, firstName, lastName, address, phone, email)
+                        userViewModel.addUserToDatabase(userId, userModel) { success, message ->
+                            loadingUtils.dismiss()
+                            if (success) {
+                                Toast.makeText(this@RegistrationActivity, message, Toast.LENGTH_LONG).show()
+                                startActivity(Intent(this@RegistrationActivity, LoginActivity::class.java))
+                                finish()
+                            } else {
+                                Toast.makeText(this@RegistrationActivity, message, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    } else {
+                        loadingUtils.dismiss()
+                        Toast.makeText(this@RegistrationActivity, message, Toast.LENGTH_LONG).show()
+                    }
+                }
             }
         }
 
-        // Observe error messages
-        userViewModel.errorMessage.observe(this) { message ->
-            if (message.isNotEmpty()) {
-                Log.e(TAG, "Registration error: $message")
-                showToast("Error: $message")
-            }
+        // Navigate to LoginActivity
+        binding.btnLoginNavigate.setOnClickListener {
+            startActivity(Intent(this@RegistrationActivity, LoginActivity::class.java))
+            finish()
         }
 
-        registerButton.setOnClickListener {
-            val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString().trim()
-
-            if (validateInput(email, password)) {
-                registerUser(email, password)
-            }
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
         }
     }
 
-    private fun validateInput(email: String, password: String): Boolean {
-        return when {
-            email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                showToast("Enter a valid email")
-                false
-            }
-            password.length < 8 -> {
-                showToast("Password must be at least 8 characters long")
-                false
-            }
-            else -> true
+    private fun validateInputs(
+        firstName: String, lastName: String, email: String, password: String,
+        confirmPassword: String, phone: String, address: String
+    ): Boolean {
+        // Check if fields are empty
+        if (firstName.isEmpty()) {
+            Toast.makeText(this, "Please enter your first name", Toast.LENGTH_SHORT).show()
+            return false
         }
-    }
 
-    private fun registerUser(email: String, password: String) {
-        Log.d(TAG, "Attempting to register user: $email")
-        userViewModel.signup(email, password)
-    }
+        if (lastName.isEmpty()) {
+            Toast.makeText(this, "Please enter your last name", Toast.LENGTH_SHORT).show()
+            return false
+        }
 
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
+        if (email.isEmpty()) {
+            Toast.makeText(this, "Please enter your email", Toast.LENGTH_SHORT).show()
+            return false
+        }
 
-    companion object {
-        private const val TAG = "RegistrationActivity"
+        if (password.isEmpty()) {
+            Toast.makeText(this, "Please enter your password", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (confirmPassword.isEmpty()) {
+            Toast.makeText(this, "Please confirm your password", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (phone.isEmpty()) {
+            Toast.makeText(this, "Please enter your phone number", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (address.isEmpty()) {
+            Toast.makeText(this, "Please enter your address", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Validate first name - only letters allowed
+        if (!firstName.matches("[a-zA-Z]+".toRegex()) || firstName.length < 3) {
+            Toast.makeText(this, "Enter a valid first name (letters only, min 3 characters)", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Validate last name - only letters allowed
+        if (!lastName.matches("[a-zA-Z]+".toRegex())) {
+            Toast.makeText(this, "Last name must contain only letters", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Validate email format
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Validate password - at least 8 characters with at least one letter and one number
+        if (password.length < 8 || !password.matches(".*[A-Za-z].*".toRegex()) ||
+            !password.matches(".*[0-9].*".toRegex())) {
+            Toast.makeText(this, "Password must be at least 8 characters with letters and numbers", Toast.LENGTH_LONG).show()
+            return false
+        }
+
+        // Validate confirm password
+        if (password != confirmPassword) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Validate phone number - must be exactly 10 digits
+        if (phone.length != 10 || !phone.matches("\\d+".toRegex())) {
+            Toast.makeText(this, "Phone number must be 10 digits", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Validate address - must be at least 5 characters and contain at least one letter
+        if (address.length <= 5 || !address.matches(".*[a-zA-Z].*".toRegex())) {
+            Toast.makeText(this, "Please enter a valid address (min 5 characters, no special characters)", Toast.LENGTH_LONG).show()
+            return false
+        }
+
+        return true
     }
 }

@@ -1,4 +1,4 @@
-package com.example.petalsbyyou.model
+package com.example.memoir.model
 
 import android.os.Parcel
 import android.os.Parcelable

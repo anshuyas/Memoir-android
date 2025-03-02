@@ -14,7 +14,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.memoir.R
 import com.example.memoir.repository.UserRepositoryImpl
 import com.example.memoir.viewmodel.UserViewModel
-import com.example.memoir.viewmodel.UserViewModelFactory
 
 class LoginActivity : AppCompatActivity() {
 
