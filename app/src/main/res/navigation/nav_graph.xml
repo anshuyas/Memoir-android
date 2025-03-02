@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/nav_dashboard">
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.example.memoir.ui.fragment.DashboardFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/nav_journal"
+        android:name="com.example.memoir.ui.fragments.JournalEntryFragment"
+        android:label="Journal"
+        tools:layout="@layout/fragment_journal_entry" />
+
+    <fragment
+        android:id="@+id/nav_calendar"
+        android:name="com.example.memoir.ui.fragment.CalendarFragment"
+        android:label="Calendar"
+        tools:layout="@layout/fragment_calendar" />
+
+    <fragment
+        android:id="@+id/nav_edit_profile"
+        android:name="com.example.memoir.ui.fragment.EditProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_edit_profile" />
+
+</navigation>

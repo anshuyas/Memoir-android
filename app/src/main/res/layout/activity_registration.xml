@@ -1,0 +1,133 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Background Image -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/wallpaper"
+        android:scaleType="centerCrop"
+        android:contentDescription="background image"/>
+
+    <!-- ScrollView for form content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp">
+
+            <!-- Card Container -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                app:cardCornerRadius="50dp"
+                app:cardElevation="8dp"
+                app:cardBackgroundColor="#FAF3E0">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <!-- Logo -->
+                    <ImageView
+                        android:layout_width="104dp"
+                        android:layout_height="92dp"
+                        android:layout_marginBottom="16dp"
+                        android:contentDescription="App logo"
+                        android:src="@drawable/logo" />
+
+                    <!-- First Name -->
+                    <EditText
+                        android:id="@+id/firstName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:background="@drawable/edittext_background"
+                        android:hint="First Name"
+                        android:inputType="textPersonName"
+                        android:padding="16dp"
+                        android:textColor="#EFAAB0"
+                        android:textColorHint="#EFAAB0" />
+
+                    <!-- Last Name -->
+                    <EditText
+                        android:id="@+id/lastName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:background="@drawable/edittext_background"
+                        android:hint="Last Name"
+                        android:inputType="textPersonName"
+                        android:padding="16dp"
+                        android:textColor="#EFAAB0"
+                        android:textColorHint="#EFAAB0" />
+
+                    <!-- User Name -->
+                    <EditText
+                        android:id="@+id/userName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:background="@drawable/edittext_background"
+                        android:hint="User Name"
+                        android:inputType="textPersonName"
+                        android:padding="16dp"
+                        android:textColor="#EFAAB0"
+                        android:textColorHint="#EFAAB0" />
+
+                    <!-- Email -->
+                    <EditText
+                        android:id="@+id/email"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:background="@drawable/edittext_background"
+                        android:hint="Email"
+                        android:inputType="textEmailAddress"
+                        android:padding="16dp"
+                        android:textColor="#EFAAB0"
+                        android:textColorHint="#EFAAB0" />
+
+                    <!-- Password -->
+                    <EditText
+                        android:id="@+id/password"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/edittext_background"
+                        android:hint="Password"
+                        android:inputType="textPassword"
+                        android:padding="16dp"
+                        android:textColor="#EFAAB0"
+                        android:textColorHint="#EFAAB0" />
+
+                    <!-- Register Button -->
+                    <Button
+                        android:id="@+id/registerButton"
+                        android:layout_width="186dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:backgroundTint="#BE0982"
+                        android:elevation="4dp"
+                        android:padding="16dp"
+                        android:text="Register"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>
