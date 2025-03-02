@@ -54,7 +54,7 @@ class RegistrationActivity : AppCompatActivity() {
         // Sign-up button click listener
         binding.signUp.setOnClickListener {
             val firstName = binding.registerFname.text.toString().trim()
-            val lastName = binding.registerLName.text.toString().trim()
+            val lastName = binding.registerLname.text.toString().trim()
             val email = binding.registerEmail.text.toString().trim()
             val password = binding.registerPassword.text.toString().trim()
             val confirmPassword = binding.registerConfirmPassword.text.toString().trim()
