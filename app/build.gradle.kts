@@ -70,6 +70,7 @@ dependencies {
     implementation("androidx.compose.material:material:1.6.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.1")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.1")
+    implementation("androidx.compose.compiler:compiler:1.5.3")
 
     // Testing dependencies
     testImplementation(libs.junit)
