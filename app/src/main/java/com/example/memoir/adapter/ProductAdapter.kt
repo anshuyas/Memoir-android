@@ -49,7 +49,6 @@ class ProductAdapter(
 
         // Set product details
         holder.productName.text = product.productName
-        holder.productDesc.text = product.productDesc
 
         // Format price with currency symbol
         val formatter = NumberFormat.getCurrencyInstance(Locale.US)
@@ -60,10 +59,10 @@ class ProductAdapter(
         // Set wishlist button state
         if (wishlistedItems.contains(product.productId)) {
             holder.btnWishlist.setImageResource(R.drawable.ic_wishlist)
-            holder.btnWishlist.setColorFilter(context.getColor(R.color.heart_color))
+            holder.btnWishlist.setColorFilter(context.getColor(R.color.Mochamousse))
         } else {
             holder.btnWishlist.setImageResource(R.drawable.ic_wishlist)
-            holder.btnWishlist.setColorFilter(context.getColor(R.color.text_secondary))
+            holder.btnWishlist.setColorFilter(context.getColor(R.color.lavendar))
         }
 
         // Set click listeners
@@ -74,10 +73,10 @@ class ProductAdapter(
         holder.btnWishlist.setOnClickListener {
             if (wishlistedItems.contains(product.productId)) {
                 wishlistedItems.remove(product.productId)
-                holder.btnWishlist.setColorFilter(context.getColor(R.color.text_secondary))
+                holder.btnWishlist.setColorFilter(context.getColor(R.color.lavendar))
             } else {
                 wishlistedItems.add(product.productId)
-                holder.btnWishlist.setColorFilter(context.getColor(R.color.heart_color))
+                holder.btnWishlist.setColorFilter(context.getColor(R.color.Mochamousse))
             }
             listener?.onWishlistClicked(product, holder.adapterPosition)
         }
@@ -93,7 +92,6 @@ class ProductAdapter(
         val productCard: MaterialCardView = itemView.findViewById(R.id.productCard)
         val productImage: ImageView = itemView.findViewById(R.id.productImage)
         val productName: TextView = itemView.findViewById(R.id.productName)
-        val productDesc: TextView = itemView.findViewById(R.id.productDesc)
         val productPrice: TextView = itemView.findViewById(R.id.productPrice)
         val btnAddToCart: MaterialButton = itemView.findViewById(R.id.btnAddToCart)
         val btnWishlist: ImageButton = itemView.findViewById(R.id.btnWishlist)

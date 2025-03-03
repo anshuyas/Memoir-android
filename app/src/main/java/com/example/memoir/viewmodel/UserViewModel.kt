@@ -4,7 +4,7 @@ import com.example.memoir.model.UserModel
 import com.example.memoir.repository.UserRepository
 import com.google.firebase.auth.FirebaseUser
 
-class UserViewModel(val repo: UserRepository){
+class UserViewModel(val repo: UserRepository) {
 
     fun login(email: String, password: String, callback: (Boolean, String) -> Unit) {
         repo.login(email, password, callback)
@@ -14,7 +14,11 @@ class UserViewModel(val repo: UserRepository){
         repo.signup(email, password, callback)
     }
 
-    fun addUserToDatabase(userId: String, userModel: UserModel, callback: (Boolean, String) -> Unit) {
+    fun addUserToDatabase(
+        userId: String,
+        userModel: UserModel,
+        callback: (Boolean, String) -> Unit
+    ) {
         repo.addUserToDatabase(userId, userModel, callback)
     }
 
@@ -37,3 +41,4 @@ class UserViewModel(val repo: UserRepository){
     fun deleteUserProfile(callback: (Boolean, String) -> Unit) {
         repo.deleteUserProfile(callback)
     }
+}

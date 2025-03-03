@@ -1,60 +1,225 @@
 package com.example.memoir.ui.fragment
 
+import com.example.memoir.model.ProductModel
+import com.example.memoir.repository.ProductRepositoryImpl
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.memoir.R
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.memoir.adapter.CartAdapter
+import com.example.memoir.databinding.FragmentCartBinding
+import com.example.memoir.model.CartModel
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import com.example.memoir.repository.CartRepositoryImpl
+import com.example.memoir.repository.UserRepositoryImpl
+import java.text.NumberFormat
+import java.util.Locale
 
-/**
- * A simple [Fragment] subclass.
- * Use the [CartFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class CartFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private var _binding: FragmentCartBinding? = null
+    private val binding get() = _binding!!
+    private lateinit var cartAdapter: CartAdapter
+    private val cartRepository = CartRepositoryImpl()
+    private val productRepository = ProductRepositoryImpl()
+    private val userRepository = UserRepositoryImpl()
+    private val cartItems = mutableListOf<CartModel>()
+    private val productMap = mutableMapOf<String, ProductModel>()
+
+    private val userId: String?
+        get() = userRepository.getCurrentUser()?.uid
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_cart, container, false)
+    ): View {
+        _binding = FragmentCartBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment CartFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            CartFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Ensure user is logged in
+        if (userId == null) {
+            Toast.makeText(requireContext(), "Please log in to access your cart", Toast.LENGTH_SHORT).show()
+            binding.emptyStateLayout.visibility = View.VISIBLE
+            binding.cartContentLayout.visibility = View.GONE
+            return
+        }
+
+        setupRecyclerView()
+        loadCartItems()
+
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            loadCartItems()
+        }
+
+        binding.btnCheckout.setOnClickListener {
+            if (cartItems.isNotEmpty()) {
+                checkoutOrder()
+            } else {
+                Toast.makeText(requireContext(), "Your cart is empty", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun setupRecyclerView() {
+        cartAdapter = CartAdapter(
+            requireContext(),
+            cartItems,
+            productMap,
+            onRemoveClick = { cartId -> removeCartItem(cartId) },
+            onQuantityChange = { cartId, quantity -> updateCartItemQuantity(cartId, quantity) }
+        )
+
+        binding.recyclerViewCart.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = cartAdapter
+        }
+    }
+
+    private fun loadCartItems() {
+        binding.swipeRefreshLayout.isRefreshing = true
+
+        if (userId == null) {
+            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_SHORT).show()
+            binding.swipeRefreshLayout.isRefreshing = false
+            return
+        }
+
+        cartRepository.getCartItems(userId!!) { items, success, message ->
+            if (_binding == null) return@getCartItems
+
+            binding.swipeRefreshLayout.isRefreshing = false
+
+            if (success && items != null) {
+                cartItems.clear()
+                cartItems.addAll(items)
+                loadJournalsForCartItems()
+            } else {
+                Toast.makeText(requireContext(), "Failed to load cart items: $message", Toast.LENGTH_SHORT).show()
+                toggleEmptyState()
+            }
+        }
+    }
+
+    private fun loadJournalsForCartItems() {
+        if (cartItems.isEmpty()) {
+            updateCartSummary()
+            toggleEmptyState()
+            return
+        }
+
+        var loadedCount = 0
+        productMap.clear()
+
+        for (cartItem in cartItems) {
+            productRepository.getProductById(cartItem.productId) { journal, success ->
+                if (_binding == null) return@getProductById
+
+                if (success && journal != null) {
+                    productMap[journal.productId] = journal
+                }
+
+                loadedCount++
+                if (loadedCount >= cartItems.size) {
+                    cartAdapter.notifyDataSetChanged()
+                    updateCartSummary()
+                    toggleEmptyState()
                 }
             }
+        }
+    }
+
+    private fun removeCartItem(cartId: String) {
+        cartRepository.removeFromCart(cartId) { success, message ->
+            if (_binding == null) return@removeFromCart
+
+            if (success) {
+                val position = cartItems.indexOfFirst { it.cartId == cartId }
+                if (position != -1) {
+                    cartItems.removeAt(position)
+                    cartAdapter.notifyItemRemoved(position)
+                    updateCartSummary()
+                    toggleEmptyState()
+                }
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateCartItemQuantity(cartId: String, quantity: Int) {
+        if (_binding == null) return
+
+        if (quantity <= 0) {
+            removeCartItem(cartId)
+            return
+        }
+
+        cartRepository.updateCartItem(cartId, quantity) { success, message ->
+            if (_binding == null) return@updateCartItem
+
+            if (success) {
+                val position = cartItems.indexOfFirst { it.cartId == cartId }
+                if (position != -1) {
+                    cartItems[position].quantity = quantity
+                    cartAdapter.notifyItemChanged(position)
+                    updateCartSummary()
+                }
+            } else {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateCartSummary() {
+        if (_binding == null) return
+
+        var subtotal = 0.0
+        var totalItems = 0
+
+        for (item in cartItems) {
+            subtotal += item.price * item.quantity
+            totalItems += item.quantity
+        }
+
+        val formatter = NumberFormat.getCurrencyInstance(Locale.US)
+        binding.textSubtotal.text = formatter.format(subtotal)
+        binding.textShipping.text = if (subtotal > 0) formatter.format(0) else formatter.format(0)
+        binding.textTotal.text = formatter.format(subtotal)
+        binding.textItemCount.text = "Items ($totalItems)"
+    }
+
+    private fun toggleEmptyState() {
+        if (_binding == null) return
+
+        if (cartItems.isEmpty()) {
+            binding.emptyStateLayout.visibility = View.VISIBLE
+            binding.cartContentLayout.visibility = View.GONE
+        } else {
+            binding.emptyStateLayout.visibility = View.GONE
+            binding.cartContentLayout.visibility = View.VISIBLE
+        }
+    }
+
+    private fun checkoutOrder() {
+        if (_binding == null) return
+
+        Toast.makeText(requireContext(), "Order placed successfully!", Toast.LENGTH_LONG).show()
+        cartItems.clear()
+        cartAdapter.notifyDataSetChanged()
+        updateCartSummary()
+        toggleEmptyState()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

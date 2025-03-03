@@ -1,11 +1,7 @@
 package com.example.memoir.repository
 
 import com.example.memoir.model.CartModel
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 
 class CartRepositoryImpl : CartRepository {
 
@@ -14,8 +10,8 @@ class CartRepositoryImpl : CartRepository {
 
     override fun addToCart(cartModel: CartModel, callback: (Boolean, String) -> Unit) {
         val cartId = ref.push().key.toString()
-        cartModel.cartId = cartId
-        ref.child(cartId).setValue(cartModel).addOnCompleteListener {
+        val newCartModel = cartModel.copy(cartId = cartId) // Use copy instead of modifying val
+        ref.child(cartId).setValue(newCartModel).addOnCompleteListener {
             if (it.isSuccessful) {
                 callback(true, "Added to cart")
             } else {
@@ -45,7 +41,7 @@ class CartRepositoryImpl : CartRepository {
     }
 
     override fun getCartItems(userId: String, callback: (List<CartModel>?, Boolean, String) -> Unit) {
-        ref.orderByChild("userId").equalTo(userId).addValueEventListener(object : ValueEventListener {
+        ref.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val cartItems = mutableListOf<CartModel>()
                 for (item in snapshot.children) {

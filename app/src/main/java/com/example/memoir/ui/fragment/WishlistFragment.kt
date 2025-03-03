@@ -1,60 +1,143 @@
 package com.example.memoir.ui.fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.memoir.R
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.memoir.adapter.WishlistAdapter
+import com.example.memoir.databinding.FragmentWishlistBinding
+import com.example.memoir.model.ProductModel
+import com.example.memoir.model.WishlistModel
+import com.example.memoir.repository.ProductRepositoryImpl
+import com.example.memoir.repository.UserRepositoryImpl
+import com.example.memoir.repository.WishlistRepositoryImpl
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [WishlistFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class WishlistFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private var _binding: FragmentWishlistBinding? = null
+    private val binding get() = _binding!!
+    private lateinit var wishlistAdapter: WishlistAdapter
+    private val wishlistRepo = WishlistRepositoryImpl()
+    private val productRepo = ProductRepositoryImpl()
+    private val userRepo = UserRepositoryImpl()
+    private val wishlistItems = mutableListOf<WishlistModel>()
+    private val productDetails = mutableMapOf<String, ProductModel>()
+
+    private val userId: String?
+        get() = userRepo.getCurrentUser()?.uid
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_wishlist, container, false)
+    ): View {
+        _binding = FragmentWishlistBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment WishlistFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            WishlistFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        if (userId == null) {
+            displayLoginPrompt()
+            return
+        }
+
+        setupRecyclerView()
+        fetchWishlist()
+
+
+    }
+
+    private fun setupRecyclerView() {
+        wishlistAdapter = WishlistAdapter(
+            requireContext(), wishlistItems, productDetails,
+            onRemoveClick = { wishlistId -> removeItem(wishlistId) },
+            onProductClick = { productId -> showProductDetails(productId) }
+        )
+
+        binding.recyclerViewWi.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = wishlistAdapter
+        }
+    }
+
+    private fun fetchWishlist() {
+
+        userId?.let { uid ->
+            wishlistRepo.getWishlistItems(uid) { items, success, message ->
+
+                if (success && items != null) {
+                    wishlistItems.clear()
+                    wishlistItems.addAll(items)
+                    fetchProductDetails()
+                } else {
+                    Toast.makeText(context, "Error: $message", Toast.LENGTH_SHORT).show()
+                    toggleViewVisibility()
                 }
             }
+        } ?: displayLoginPrompt()
+    }
+
+    private fun fetchProductDetails() {
+        if (wishlistItems.isEmpty()) {
+            toggleViewVisibility()
+            return
+        }
+
+        productDetails.clear()
+        var loadedCount = 0
+
+        wishlistItems.forEach { item ->
+            productRepo.getProductById(item.productId) { product, success ->
+                if (success && product != null) {
+                    productDetails[product.productId] = product
+                }
+                if (++loadedCount >= wishlistItems.size) {
+                    wishlistAdapter.notifyDataSetChanged()
+                    toggleViewVisibility()
+                }
+            }
+        }
+    }
+
+    private fun removeItem(wishlistId: String) {
+        wishlistRepo.removeFromWishlist(wishlistId) { success, message ->
+            if (success) {
+                wishlistItems.removeAll { it.wishlistId == wishlistId }
+                wishlistAdapter.notifyDataSetChanged()
+                toggleViewVisibility()
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showProductDetails(productId: String) {
+        Toast.makeText(context, "Selected product: $productId", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun displayLoginPrompt() {
+        Toast.makeText(requireContext(), "Log in to view wishlist", Toast.LENGTH_SHORT).show()
+        binding.emptyStateLayout.visibility = View.VISIBLE
+//        binding.wishlistContentLayout.visibility = View.GONE
+    }
+
+    private fun toggleViewVisibility() {
+        if (wishlistItems.isEmpty()) {
+            binding.emptyStateLayout.visibility = View.VISIBLE
+//            binding.wishlistContentLayout.visibility = View.GONE
+        } else {
+            binding.emptyStateLayout.visibility = View.GONE
+//            binding.wishlistContentLayout.visibility = View.VISIBLE
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

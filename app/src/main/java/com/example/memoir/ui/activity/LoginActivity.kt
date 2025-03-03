@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.example.memoir.databinding.ActivityLoginBinding
+import com.example.memoir.repository.UserRepositoryImpl
 import com.example.memoir.utils.LoadingUtils
 import com.example.memoir.viewmodel.UserViewModel
 
@@ -24,17 +25,8 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         loadingUtils = LoadingUtils(this)
-        userViewModel = UserViewModel()
-
-        // Password visibility toggle
-        binding.togglePassword.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                binding.loginPassword.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-            } else {
-                binding.loginPassword.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-            }
-            binding.loginPassword.setSelection(binding.loginPassword.text.length)
-        }
+        val repo = UserRepositoryImpl()
+        userViewModel = UserViewModel(repo)
 
         // Login button click listener
         binding.btnLogin.setOnClickListener {
@@ -44,13 +36,15 @@ class LoginActivity : AppCompatActivity() {
             if (validateInputs(email, password)) {
                 loadingUtils.show()
                 userViewModel.login(email, password) { success, message ->
-                    loadingUtils.dismiss()
+
                     if (success) {
                         Toast.makeText(this@LoginActivity, "Login successful!", Toast.LENGTH_LONG).show()
                         startActivity(Intent(this@LoginActivity, NavigationActivity::class.java))
                         finish()
+                        loadingUtils.dismiss()
                     } else {
                         Toast.makeText(this@LoginActivity, message, Toast.LENGTH_LONG).show()
+                        loadingUtils.dismiss()
                     }
                 }
             }

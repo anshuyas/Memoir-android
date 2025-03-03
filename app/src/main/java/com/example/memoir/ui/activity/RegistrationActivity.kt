@@ -32,24 +32,28 @@ class RegistrationActivity : AppCompatActivity() {
         val repo = UserRepositoryImpl()
         userViewModel = UserViewModel(repo)
 
-        // Password visibility toggle
-        binding.togglePassword.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                binding.registerPassword.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        binding.togglePassword.setEndIconOnClickListener {
+            val inputType = binding.registerPassword.inputType
+            if (inputType == android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
+                binding.registerPassword.inputType =
+                    android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
             } else {
-                binding.registerPassword.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                binding.registerPassword.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
             }
-            binding.registerPassword.setSelection(binding.registerPassword.text.length)
+            binding.registerPassword.setSelection(binding.registerPassword.text?.length ?: 0)
         }
 
-        binding.toggleConfirmPassword.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                binding.registerConfirmPassword.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        binding.toggleConfirmPassword.setEndIconOnClickListener {
+            val inputType = binding.registerConfirmPassword.inputType
+            if (inputType == android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD) {
+                binding.registerConfirmPassword.inputType =
+                    android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
             } else {
-                binding.registerConfirmPassword.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                binding.registerConfirmPassword.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
             }
-            binding.registerConfirmPassword.setSelection(binding.registerConfirmPassword.text.length)
+            binding.registerConfirmPassword.setSelection(binding.registerConfirmPassword.text?.length ?: 0)
         }
+
 
         // Sign-up button click listener
         binding.signUp.setOnClickListener {
@@ -67,12 +71,15 @@ class RegistrationActivity : AppCompatActivity() {
                     if (success) {
                         val userModel = UserModel(userId, firstName, lastName, address, phone, email)
                         userViewModel.addUserToDatabase(userId, userModel) { success, message ->
-                            loadingUtils.dismiss()
+
+
                             if (success) {
                                 Toast.makeText(this@RegistrationActivity, message, Toast.LENGTH_LONG).show()
                                 startActivity(Intent(this@RegistrationActivity, LoginActivity::class.java))
                                 finish()
+                                loadingUtils.dismiss()
                             } else {
+                                loadingUtils.dismiss()
                                 Toast.makeText(this@RegistrationActivity, message, Toast.LENGTH_LONG).show()
                             }
                         }

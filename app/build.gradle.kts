@@ -48,13 +48,7 @@ android {
 
 dependencies {
     // Import Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
 
-    // Firebase dependencies
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-database-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
 
     // AndroidX dependencies
     implementation(libs.androidx.core.ktx)
@@ -69,8 +63,14 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.6.1")
     implementation("androidx.compose.material:material:1.6.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.1")
+
+
+    implementation("com.google.firebase:firebase-auth:20.0.2")
+    implementation(libs.firebase.database)
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.1")
     implementation("androidx.compose.compiler:compiler:1.5.3")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
 
     // Testing dependencies
     testImplementation(libs.junit)
