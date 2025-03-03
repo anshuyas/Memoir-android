@@ -61,8 +61,12 @@ class UserRepositoryImpl : UserRepository {
     override fun getUserDetails(userId: String, callback: (UserModel?) -> Unit) {
         ref.child(userId).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val userModel = snapshot.getValue(UserModel::class.java)
-                callback(userModel)
+                if (snapshot.exists()) {
+                    val userModel = snapshot.getValue(UserModel::class.java)
+                    callback(userModel)
+                } else {
+                    callback(null)
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {

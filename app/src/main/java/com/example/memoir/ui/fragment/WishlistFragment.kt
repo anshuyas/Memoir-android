@@ -47,8 +47,6 @@ class WishlistFragment : Fragment() {
 
         setupRecyclerView()
         fetchWishlist()
-
-
     }
 
     private fun setupRecyclerView() {
@@ -65,14 +63,17 @@ class WishlistFragment : Fragment() {
     }
 
     private fun fetchWishlist() {
-
         userId?.let { uid ->
             wishlistRepo.getWishlistItems(uid) { items, success, message ->
-
                 if (success && items != null) {
                     wishlistItems.clear()
                     wishlistItems.addAll(items)
-                    fetchProductDetails()
+
+                    if (wishlistItems.isEmpty()) {
+                        toggleViewVisibility()
+                    } else {
+                        fetchProductDetails()
+                    }
                 } else {
                     Toast.makeText(context, "Error: $message", Toast.LENGTH_SHORT).show()
                     toggleViewVisibility()
@@ -107,6 +108,7 @@ class WishlistFragment : Fragment() {
         wishlistRepo.removeFromWishlist(wishlistId) { success, message ->
             if (success) {
                 wishlistItems.removeAll { it.wishlistId == wishlistId }
+                productDetails.remove(wishlistId)  // Remove from product details map
                 wishlistAdapter.notifyDataSetChanged()
                 toggleViewVisibility()
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -122,17 +124,17 @@ class WishlistFragment : Fragment() {
 
     private fun displayLoginPrompt() {
         Toast.makeText(requireContext(), "Log in to view wishlist", Toast.LENGTH_SHORT).show()
+        binding.recyclerViewWi.visibility = View.GONE
         binding.emptyStateLayout.visibility = View.VISIBLE
-//        binding.wishlistContentLayout.visibility = View.GONE
     }
 
     private fun toggleViewVisibility() {
         if (wishlistItems.isEmpty()) {
+            binding.recyclerViewWi.visibility = View.GONE
             binding.emptyStateLayout.visibility = View.VISIBLE
-//            binding.wishlistContentLayout.visibility = View.GONE
         } else {
+            binding.recyclerViewWi.visibility = View.VISIBLE
             binding.emptyStateLayout.visibility = View.GONE
-//            binding.wishlistContentLayout.visibility = View.VISIBLE
         }
     }
 

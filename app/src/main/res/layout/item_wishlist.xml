@@ -41,7 +41,7 @@
                 android:id="@+id/wishlistProductName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Beautiful Rose Bouquet"
+                android:text="Leaf Ring"
                 android:textSize="16sp"
                 android:textColor="@color/Chanterelle"
                 android:textStyle="bold"
